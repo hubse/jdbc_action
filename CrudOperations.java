@@ -249,12 +249,48 @@ public class CrudOperations {
         return sql.toString();
     }
 
+    /**
+     * Builds a SQL JOIN query based on provided tables, join conditions, columns, and where clause.
+     *
+     * @param tables Array of table names to join
+     * @param joinConditions Array of join conditions (e.g., "table1.column = table2.column")
+     * @param columns Array of columns to select (null for all columns)
+     * @param whereClause Optional WHERE clause
+     * @return Constructed SQL query string
+     * @throws IllegalArgumentException if invalid parameters are provided
+     */
     private String buildJoinQuery(String[] tables, String[] joinConditions, 
             String[] columns, String whereClause) {
+        if (tables == null || tables.length < 2) {
+            throw new IllegalArgumentException("At least two tables are required for a join");
+        }
         if (joinConditions == null || joinConditions.length < 1) {
             throw new IllegalArgumentException("At least one join condition is required");
         }
 
         StringBuilder sql = new StringBuilder("SELECT ");
         
-        if (columns == null
+        // Add columns or * for all columns
+        if (columns == null || columns.length == 0) {
+            sql.append("*");
+        } else {
+            sql.append(String.join(", ", columns));
+        }
+        
+        // Add FROM clause with first table
+        sql.append(" FROM ").append(tables[0]);
+        
+        // Add JOIN clauses
+        for (int i = 1; i < tables.length; i++) {
+            sql.append(" INNER JOIN ").append(tables[i]);
+            if (i <= joinConditions.length) {
+                sql.append(" ON ").append(joinConditions[i - 1]);
+            }
+        }
+        
+        // Add WHERE clause if provided
+        if (whereClause != null && !whereClause.trim().isEmpty()) {
+            sql.append(" WHERE ").append(whereClause);
+        }
+        
+        return sql.toString();
